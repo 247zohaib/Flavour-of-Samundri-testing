@@ -15,6 +15,7 @@ import {
   Clock,
   Inbox,
   Download,
+  XCircle,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -289,18 +290,18 @@ const AdminDashboard = () => {
 
       <main className="max-w-7xl mx-auto px-6 sm:px-8 py-10">
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
           <StatCard
             testid="stat-revenue"
             icon={TrendingUp}
             label="Total Revenue"
             value={fmtMoney(stats?.total_revenue)}
-            sub={`${stats?.total_orders || 0} orders all time`}
+            sub={`${stats?.completed_orders || 0} completed orders`}
           />
           <StatCard
             testid="stat-today"
             icon={Clock}
-            label="Today"
+            label="Today's Revenue"
             value={fmtMoney(stats?.today_revenue)}
             sub={`${stats?.today_orders || 0} orders today`}
           />
@@ -318,6 +319,44 @@ const AdminDashboard = () => {
             value={stats?.unread_messages || 0}
             sub="from contact form"
           />
+        </div>
+
+        {/* Secondary stats: cancelled vs all */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+          <div data-testid="stat-cancelled" className="chalk-card p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="section-eyebrow mb-1">Cancelled</div>
+                <div className="font-heading text-3xl text-white">
+                  {stats?.cancelled_orders || 0}
+                </div>
+                <div className="font-body text-xs text-white/45 mt-1">
+                  not counted in revenue • {fmtMoney(stats?.cancelled_value)}
+                </div>
+              </div>
+              <XCircle className="text-[#C53030]" size={22} />
+            </div>
+          </div>
+          <div data-testid="stat-all-orders" className="chalk-card p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="section-eyebrow mb-1">All Orders</div>
+                <div className="font-heading text-3xl text-white">
+                  {stats?.total_orders || 0}
+                </div>
+                <div className="font-body text-xs text-white/45 mt-1">all statuses combined</div>
+              </div>
+              <ShoppingBag className="text-white/60" size={22} />
+            </div>
+          </div>
+          <div className="chalk-card p-5 md:col-span-2 flex items-center gap-3">
+            <div className="font-body text-xs text-white/55 leading-relaxed">
+              <span className="text-[#F59E0B] font-semibold uppercase tracking-[0.2em]">Note</span>
+              <br />
+              Revenue figures only include orders marked <span className="text-white">completed</span>.
+              Cancelled orders are excluded so your books stay accurate.
+            </div>
+          </div>
         </div>
 
         {/* Tabs */}

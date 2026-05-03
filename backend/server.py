@@ -245,24 +245,44 @@ async def admin_me(current=Depends(get_current_admin)):
 # -------------------- Admin Dashboard --------------------
 @admin_router.get("/stats")
 async def admin_stats(current=Depends(get_current_admin)):
-    pipeline_total = [{"$group": {"_id": None, "revenue": {"$sum": "$total"}, "count": {"$sum": 1}}}]
-    pipeline_status = [{"$group": {"_id": "$status", "count": {"$sum": 1}}}]
+    # Revenue ONLY counts completed orders. Cancelled orders are excluded.
     today_iso = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
-    pipeline_today = [
-        {"$match": {"created_at": {"$gte": today_iso}}},
+
+    pipeline_revenue = [
+        {"$match": {"status": "completed"}},
         {"$group": {"_id": None, "revenue": {"$sum": "$total"}, "count": {"$sum": 1}}},
     ]
+    pipeline_today_revenue = [
+        {"$match": {"status": "completed", "created_at": {"$gte": today_iso}}},
+        {"$group": {"_id": None, "revenue": {"$sum": "$total"}, "count": {"$sum": 1}}},
+    ]
+    pipeline_status = [{"$group": {"_id": "$status", "count": {"$sum": 1}}}]
+    pipeline_total_orders = [{"$group": {"_id": None, "count": {"$sum": 1}}}]
+    pipeline_today_orders = [
+        {"$match": {"created_at": {"$gte": today_iso}}},
+        {"$group": {"_id": None, "count": {"$sum": 1}}},
+    ]
+    pipeline_cancelled = [
+        {"$match": {"status": "cancelled"}},
+        {"$group": {"_id": None, "lost": {"$sum": "$total"}, "count": {"$sum": 1}}},
+    ]
 
-    total = await db.orders.aggregate(pipeline_total).to_list(1)
+    revenue = await db.orders.aggregate(pipeline_revenue).to_list(1)
+    today_rev = await db.orders.aggregate(pipeline_today_revenue).to_list(1)
     by_status = await db.orders.aggregate(pipeline_status).to_list(50)
-    today = await db.orders.aggregate(pipeline_today).to_list(1)
+    total_orders_doc = await db.orders.aggregate(pipeline_total_orders).to_list(1)
+    today_orders_doc = await db.orders.aggregate(pipeline_today_orders).to_list(1)
+    cancelled = await db.orders.aggregate(pipeline_cancelled).to_list(1)
     unread_messages = await db.contact_messages.count_documents({"read": False})
 
     return {
-        "total_revenue": (total[0]["revenue"] if total else 0),
-        "total_orders": (total[0]["count"] if total else 0),
-        "today_revenue": (today[0]["revenue"] if today else 0),
-        "today_orders": (today[0]["count"] if today else 0),
+        "total_revenue": (revenue[0]["revenue"] if revenue else 0),  # completed only
+        "completed_orders": (revenue[0]["count"] if revenue else 0),
+        "total_orders": (total_orders_doc[0]["count"] if total_orders_doc else 0),
+        "today_revenue": (today_rev[0]["revenue"] if today_rev else 0),  # completed today only
+        "today_orders": (today_orders_doc[0]["count"] if today_orders_doc else 0),
+        "cancelled_orders": (cancelled[0]["count"] if cancelled else 0),
+        "cancelled_value": (cancelled[0]["lost"] if cancelled else 0),
         "by_status": {row["_id"]: row["count"] for row in by_status},
         "unread_messages": unread_messages,
     }
