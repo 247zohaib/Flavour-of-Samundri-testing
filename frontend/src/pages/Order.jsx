@@ -22,7 +22,7 @@ const PICKUP_LOCATION = "Shahbaz Garden, Samundri";
 const Order = () => {
   const { items, updateQty, removeItem, total, clear } = useCart();
   const [orderType, setOrderType] = useState("delivery"); // delivery | pickup
-  const [form, setForm] = useState({ customer_name: "", phone: "", address: "", notes: "" });
+  const [form, setForm] = useState({ customer_name: "", phone: "", address: "", notes: "", pickup_time: "" });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(null);
 
@@ -36,6 +36,7 @@ const Order = () => {
       `Name: ${form.customer_name}`,
       `Phone: ${form.phone}`,
       isPickup ? `Pickup at: ${PICKUP_LOCATION}` : `Address: ${form.address}`,
+      isPickup && form.pickup_time ? `Preferred Pickup Time: ${form.pickup_time}` : null,
       form.notes ? `Notes: ${form.notes}` : null,
       ``,
       `*Items:*`,
@@ -78,7 +79,7 @@ const Order = () => {
         phone: form.phone,
         order_type: orderType,
         address: isPickup ? "" : form.address,
-        notes: form.notes,
+        notes: [form.notes, isPickup && form.pickup_time ? `Preferred pickup time: ${form.pickup_time}` : ""].filter(Boolean).join(" | "),
         items: items.map(({ id, name, price, quantity }) => ({ id, name, price, quantity })),
         total,
       };
@@ -257,13 +258,25 @@ const Order = () => {
                 </button>
               </div>
               {isPickup && (
-                <p
+                <div
                   data-testid="order-pickup-info"
-                  className="font-body text-xs text-white/60 mt-3 border-l-2 border-[#D97706] pl-3"
+                  className="mt-3 p-4 border border-[#D97706]/40 bg-[#D97706]/5 space-y-2"
                 >
-                  Pick up at <span className="text-white">{PICKUP_LOCATION}</span>. We'll call you when it's ready.
-                </p>
+                  <p className="font-body text-sm text-white/85">
+                    <span className="text-[#F59E0B] font-semibold">Pickup Point:</span> {PICKUP_LOCATION}
+                  </p>
+                  <p className="font-body text-xs text-white/65 leading-relaxed">
+                    We'll call you on the number below once your order is ready so you know exactly when and where to pick it up.
+                  </p>
+                </div>
               )}
+            </div>
+
+            <div className="pt-2">
+              <p className="section-eyebrow mb-1">Your Contact Info</p>
+              <p className="font-body text-xs text-white/55 mb-4">
+                So we can reach you about your {isPickup ? "pickup" : "delivery"}.
+              </p>
             </div>
 
             <div>
@@ -296,6 +309,18 @@ const Order = () => {
                   rows={3}
                   className="chalk-input resize-none"
                   placeholder="House #, Street, Area, Samundri"
+                />
+              </div>
+            )}
+            {isPickup && (
+              <div>
+                <label className="section-eyebrow block mb-2">Preferred Pickup Time (optional)</label>
+                <input
+                  data-testid="order-pickup-time"
+                  value={form.pickup_time}
+                  onChange={(e) => setForm({ ...form, pickup_time: e.target.value })}
+                  className="chalk-input"
+                  placeholder="e.g. 7:30 PM or ASAP"
                 />
               </div>
             )}
