@@ -1,0 +1,37 @@
+{
+  "summary": "Full retest after main agent added admin auth + dashboard + pickup/delivery toggle. Backend: 28/28 pytest tests pass covering public menu/orders/contact (incl. delivery vs pickup validation) and full admin suite (login success/wrong-pwd/unknown-email, /me with+without token, stats, orders list+filter+PATCH update+invalid status 400+404, messages list+mark-read+404, auth required on every /api/admin/* endpoint). Frontend: AdminLogin renders, wrong creds show toast, correct creds navigate to /admin and show 4 stat cards (revenue/today/pending/messages), 9 orders rendered with admin-order-{id}, status native <select> dropdown updates order via API, filter buttons (all/pending) toggle list, Messages tab loads contact messages, CSV export triggers real download (flavors-orders-2026-05-03.csv), Sign Out clears auth and redirects to /admin/login, /admin without auth redirects to login, public Header (Home, Menu, About, Contact, Order) does NOT contain /admin link. Order page pickup/delivery toggle: default delivery shows address, switching to pickup hides address and shows order-pickup-info + order-pickup-time, switching back to delivery restores address. Pickup order POST succeeds and success screen shows pickup info text.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py uses deprecated FastAPI @app.on_event('startup'/'shutdown'); migrate to lifespan handler. Non-blocking but will break in future FastAPI.",
+    "CORS middleware: allow_credentials=False is correct now, but allow_origins comes from env CORS_ORIGINS='*' which is fine; however headers/methods are wildcarded — acceptable for this app.",
+    "JWT_SECRET has a sane default fallback ('change-me'); .env provides a strong secret, but startup should hard-fail if missing in production rather than silently using fallback.",
+    "Admin endpoints have no rate limiting on /api/admin/login — vulnerable to brute force. Consider adding lockout after N failed attempts (per playbook auth_testing.md).",
+    "No httpOnly cookie used for admin session — token is stored in localStorage (XSS risk). Acceptable for owner-only private dashboard, but document trade-off.",
+    "Order date storage as ISO string (not native datetime) makes the today-revenue aggregation rely on string comparison; works because ISO strings sort lexicographically when timezone-suffix is consistent, but storing native datetime is safer.",
+    "/api/admin/orders limit defaults to 200 with no pagination metadata — fine for small restaurant volume, may need pagination later.",
+    "AdminDashboard CSV export: download triggered successfully; verify on main agent side the CSV columns match owner expectation (id, customer, phone, type, address, items, total, status, created_at, notes)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/backend_test.py"
+  ],
+  "success_rate": {"backend": "100% (28/28)", "frontend": "100% (all admin + pickup/delivery flows verified end-to-end)"},
+  "test_credentials": "Admin email=owner@flavorsofsamundri.com password=Samundri@2026 (verified working). Token stored at localStorage key fos_admin_v1.",
+  "seed_data_creation": "Created several TEST_-prefixed orders (delivery + pickup) and contact messages via API; one order PATCHed to 'confirmed' to validate status flow. No cleanup performed — low volume on test db.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All 28 backend tests in /app/backend/tests/backend_test.py and all admin + pickup/delivery frontend flows pass against the production preview URL. No outstanding bugs. If main agent makes further changes, re-run pytest and the two playwright scripts in this iteration. Note: brute-force lockout is NOT implemented on /api/admin/login; if requirements add it, write tests around 5 fails -> 401/locked.",
+  "rca of the issue": "N/A — no failures observed. Previous iteration_1 issues (missing data-testid='order-submit', 'order-item-{id}') are now fixed and verified; pickup/delivery toggle and admin auth/dashboard fully implemented and integrated."
+}
