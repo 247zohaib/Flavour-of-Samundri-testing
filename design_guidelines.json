@@ -1,0 +1,94 @@
+{
+  "theme": "dark",
+  "archetype": "1 (Organic & Earthy - Dark Variant/Rustic Cafe)",
+  "colors": {
+    "background": {
+      "primary": "#111111",
+      "secondary": "#1A1A1A",
+      "chalkboard": "linear-gradient(145deg, #161616 0%, #111111 50%, #161616 100%)"
+    },
+    "text": {
+      "primary": "#F5F5F5",
+      "secondary": "#D4D4D4",
+      "chalk_accent": "#FFFFFF"
+    },
+    "accent": {
+      "primary": "#D97706",
+      "secondary": "#C53030",
+      "hover": "#F59E0B"
+    },
+    "border": {
+      "default": "rgba(255, 255, 255, 0.15)",
+      "chalk": "rgba(255, 255, 255, 0.6)"
+    }
+  },
+  "typography": {
+    "fonts": {
+      "heading": "'Caveat', cursive",
+      "body": "'Outfit', sans-serif"
+    },
+    "scales": {
+      "h1": "text-5xl sm:text-6xl tracking-tight leading-none font-bold",
+      "h2": "text-4xl sm:text-5xl tracking-tight font-bold",
+      "h3": "text-2xl sm:text-3xl font-semibold",
+      "body": "text-base sm:text-lg leading-relaxed text-gray-300",
+      "label": "text-sm uppercase tracking-[0.2em] font-semibold"
+    }
+  },
+  "spacing_and_layout": {
+    "container": "max-w-7xl mx-auto px-6 sm:px-8",
+    "section": "py-24 sm:py-32",
+    "grid": "grid-cols-1 md:grid-cols-12 gap-8 md:gap-12"
+  },
+  "components": {
+    "button": {
+      "primary": "bg-[#D97706] text-white hover:bg-[#F59E0B] rounded-none border border-[#D97706] px-8 py-3 transition-colors duration-300 font-body text-lg",
+      "outline": "bg-transparent text-white border-2 border-white/60 hover:bg-white hover:text-black rounded-none px-8 py-3 transition-colors duration-300 font-body text-lg"
+    },
+    "card": {
+      "base": "bg-[#1A1A1A] border-2 border-white/10 hover:border-white/30 transition-all duration-300 p-6 md:p-8 rounded-sm group",
+      "image_container": "overflow-hidden border border-white/10 mb-4 rounded-sm",
+      "hover_effect": "group-hover:-translate-y-1"
+    },
+    "input": {
+      "base": "bg-transparent border-b-2 border-white/20 focus:border-[#D97706] text-white py-3 px-2 w-full transition-colors font-body rounded-none focus:outline-none focus:ring-0 placeholder:text-gray-500"
+    },
+    "header": {
+      "style": "fixed top-0 w-full z-50 bg-[#111111]/90 backdrop-blur-md border-b border-white/10"
+    }
+  },
+  "visual_effects": {
+    "chalkboard_texture": "Add a pseudo-element over sections with a subtle radial gradient or noise background to mimic chalk smudges. Example: `background-image: radial-gradient(circle at 20% 80%, rgba(255,255,255,0.03) 0%, transparent 50%)`",
+    "text_shadow": "For hero chalk text: `text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(255,255,255,0.1);`",
+    "doodles": "Use Lucide React icons with varying stroke widths (1 to 1.5) and slight rotations (`rotate-3`, `-rotate-6`) colored in white/80 to simulate hand-drawn accents.",
+    "hover_animations": "Subtle translations on hover. Chalk 'erase' effect or slow fade-ins."
+  },
+  "media": {
+    "hero": {
+      "url": "https://images.unsplash.com/photo-1619581073186-5b4ae1b0caad?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzF8MHwxfHNlYXJjaHwzfHxjaGFpJTIwY3VwJTIwZGFya3xlbnwwfHx8fDE3Nzc3OTk0Nzl8MA&ixlib=rb-4.1.0&q=85",
+      "alt": "Rustic clay pots on wooden table",
+      "usage": "Hero section background with dark overlay (bg-black/60)"
+    },
+    "menu_items": [
+      {
+        "url": "https://images.unsplash.com/photo-1755090154731-6b4f221490c3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzN8MHwxfHNlYXJjaHwxfHxiaXJ5YW5pJTIwcnVzdGljfGVufDB8fHx8MTc3Nzc5OTQ3OXww&ixlib=rb-4.1.0&q=85",
+        "alt": "Spicy Biryani",
+        "category": "Main Course"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1646398123647-695431536f7c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzR8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBmb29kJTIwZGFya3xlbnwwfHx8fDE3Nzc3OTk0Nzl8MA&ixlib=rb-4.1.0&q=85",
+        "alt": "Pakistani Food Spread",
+        "category": "Sides & Specials"
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Include 'Caveat' and 'Outfit' fonts from Google Fonts in index.html.",
+    "Build the website using pure HTML/Tailwind for layouts, use minimal Shadcn if necessary but override styles heavily to avoid the SaaS look.",
+    "Incorporate a persistent Header and Footer.",
+    "Use Lucide icons to mimic hand-drawn doodles (e.g., Coffee, ArrowRight, Star) and apply subtle tilt (rotate classes) to make them look organic.",
+    "Ensure all interactive elements have data-testid attributes.",
+    "Create the Order Now system as a functional cart that can save to DB and send a WhatsApp message.",
+    "Implement the Contact form and About Us section with the chalkboard theme."
+  ]
+}
