@@ -2,74 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
 body {
     margin: 0;
-    font-family:
-        -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-        "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-        sans-serif;
+    padding: 0;
+    background-color: #111111;
+    color: #f5f5f5;
+    font-family: "Outfit", ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-    font-family:
-        source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+::selection {
+    background: #d97706;
+    color: #111;
 }
 
 @layer base {
     :root {
-        --background: 0 0% 100%;
-        --foreground: 0 0% 3.9%;
-        --card: 0 0% 100%;
-        --card-foreground: 0 0% 3.9%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 0 0% 3.9%;
-        --primary: 0 0% 9%;
+        --background: 0 0% 6.7%;
+        --foreground: 0 0% 96%;
+        --card: 0 0% 10.2%;
+        --card-foreground: 0 0% 96%;
+        --popover: 0 0% 10.2%;
+        --popover-foreground: 0 0% 96%;
+        --primary: 32 95% 44%;
         --primary-foreground: 0 0% 98%;
-        --secondary: 0 0% 96.1%;
-        --secondary-foreground: 0 0% 9%;
-        --muted: 0 0% 96.1%;
-        --muted-foreground: 0 0% 45.1%;
-        --accent: 0 0% 96.1%;
-        --accent-foreground: 0 0% 9%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 89.8%;
-        --input: 0 0% 89.8%;
-        --ring: 0 0% 3.9%;
-        --chart-1: 12 76% 61%;
-        --chart-2: 173 58% 39%;
-        --chart-3: 197 37% 24%;
-        --chart-4: 43 74% 66%;
-        --chart-5: 27 87% 67%;
-        --radius: 0.5rem;
-    }
-    .dark {
-        --background: 0 0% 3.9%;
-        --foreground: 0 0% 98%;
-        --card: 0 0% 3.9%;
-        --card-foreground: 0 0% 98%;
-        --popover: 0 0% 3.9%;
-        --popover-foreground: 0 0% 98%;
-        --primary: 0 0% 98%;
-        --primary-foreground: 0 0% 9%;
         --secondary: 0 0% 14.9%;
-        --secondary-foreground: 0 0% 98%;
+        --secondary-foreground: 0 0% 96%;
         --muted: 0 0% 14.9%;
-        --muted-foreground: 0 0% 63.9%;
-        --accent: 0 0% 14.9%;
-        --accent-foreground: 0 0% 98%;
-        --destructive: 0 62.8% 30.6%;
+        --muted-foreground: 0 0% 70%;
+        --accent: 32 95% 44%;
+        --accent-foreground: 0 0% 8%;
+        --destructive: 0 62.8% 45%;
         --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 14.9%;
-        --input: 0 0% 14.9%;
-        --ring: 0 0% 83.1%;
-        --chart-1: 220 70% 50%;
-        --chart-2: 160 60% 45%;
-        --chart-3: 30 80% 55%;
-        --chart-4: 280 65% 60%;
-        --chart-5: 340 75% 55%;
+        --border: 0 0% 18%;
+        --input: 0 0% 18%;
+        --ring: 32 95% 44%;
+        --radius: 0.25rem;
     }
 }
 
@@ -80,36 +50,162 @@ code {
     body {
         @apply bg-background text-foreground;
     }
+    h1,
+    h2,
+    h3,
+    .font-heading {
+        font-family: "Caveat", cursive;
+        letter-spacing: 0.5px;
+    }
 }
 
-@layer base {
-    [data-debug-wrapper="true"] {
-        display: contents !important;
-    }
+/* Chalkboard texture overlays */
+.chalk-bg {
+    background-color: #111111;
+    background-image:
+        radial-gradient(circle at 18% 22%, rgba(255, 255, 255, 0.04) 0%, transparent 45%),
+        radial-gradient(circle at 82% 78%, rgba(255, 255, 255, 0.035) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 60%);
+}
 
-    [data-debug-wrapper="true"] > * {
-        margin-left: inherit;
-        margin-right: inherit;
-        margin-top: inherit;
-        margin-bottom: inherit;
-        padding-left: inherit;
-        padding-right: inherit;
-        padding-top: inherit;
-        padding-bottom: inherit;
-        column-gap: inherit;
-        row-gap: inherit;
-        gap: inherit;
-        border-left-width: inherit;
-        border-right-width: inherit;
-        border-top-width: inherit;
-        border-bottom-width: inherit;
-        border-left-style: inherit;
-        border-right-style: inherit;
-        border-top-style: inherit;
-        border-bottom-style: inherit;
-        border-left-color: inherit;
-        border-right-color: inherit;
-        border-top-color: inherit;
-        border-bottom-color: inherit;
+.chalk-noise {
+    position: relative;
+}
+.chalk-noise::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.06;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.55'/></svg>");
+    background-size: 220px 220px;
+    mix-blend-mode: screen;
+}
+
+.chalk-text {
+    text-shadow:
+        2px 2px 0 rgba(0, 0, 0, 0.6),
+        0 0 14px rgba(255, 255, 255, 0.08);
+}
+
+.handwritten {
+    font-family: "Caveat", cursive;
+}
+
+/* Dotted/dashed chalk underline */
+.chalk-underline {
+    position: relative;
+    display: inline-block;
+}
+.chalk-underline::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -10px;
+    height: 6px;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.55) 1px, transparent 1.4px);
+    background-size: 8px 6px;
+    background-repeat: repeat-x;
+}
+
+/* Doodle frame border */
+.doodle-frame {
+    position: relative;
+    border: 1.5px dashed rgba(255, 255, 255, 0.25);
+}
+.doodle-frame::before,
+.doodle-frame::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border: 1.5px solid rgba(255, 255, 255, 0.45);
+    border-radius: 50%;
+}
+.doodle-frame::before {
+    top: -7px;
+    left: -7px;
+    background: #111;
+}
+.doodle-frame::after {
+    bottom: -7px;
+    right: -7px;
+    background: #111;
+}
+
+/* Buttons */
+.btn-chalk-primary {
+    @apply inline-flex items-center justify-center gap-2 px-7 py-3 font-body text-base tracking-wide bg-[#D97706] text-white border border-[#D97706] hover:bg-[#F59E0B] hover:border-[#F59E0B] transition-colors duration-300 rounded-sm;
+}
+.btn-chalk-outline {
+    @apply inline-flex items-center justify-center gap-2 px-7 py-3 font-body text-base tracking-wide bg-transparent text-white border-2 border-white/60 hover:bg-white hover:text-black transition-colors duration-300 rounded-sm;
+}
+
+/* Card */
+.chalk-card {
+    @apply bg-[#1A1A1A] border border-white/10 hover:border-white/30 transition-all duration-300 rounded-sm;
+}
+
+/* Input */
+.chalk-input {
+    @apply bg-transparent border-b-2 border-white/20 focus:border-[#D97706] text-white py-3 px-1 w-full transition-colors font-body rounded-none focus:outline-none focus:ring-0 placeholder:text-gray-500;
+}
+
+/* Section heading */
+.section-eyebrow {
+    @apply text-xs uppercase tracking-[0.3em] font-semibold text-[#D97706];
+}
+
+/* Hover lift */
+.hover-lift {
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hover-lift:hover {
+    transform: translateY(-4px);
+}
+
+/* Marquee */
+.marquee {
+    display: flex;
+    gap: 3rem;
+    animation: marquee 28s linear infinite;
+    white-space: nowrap;
+}
+@keyframes marquee {
+    0% {
+        transform: translateX(0);
     }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* Subtle reveal on scroll using IntersectionObserver-friendly classes */
+.reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+        opacity 0.8s ease-out,
+        transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+::-webkit-scrollbar-track {
+    background: #111;
+}
+::-webkit-scrollbar-thumb {
+    background: #2a2a2a;
+    border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #3a3a3a;
 }
