@@ -43,7 +43,8 @@ class CartItem(BaseModel):
 class OrderCreate(BaseModel):
     customer_name: str
     phone: str
-    address: str
+    order_type: str = "delivery"  # "delivery" or "pickup"
+    address: Optional[str] = ""
     notes: Optional[str] = ""
     items: List[CartItem]
     total: int
@@ -53,7 +54,8 @@ class Order(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     customer_name: str
     phone: str
-    address: str
+    order_type: str = "delivery"
+    address: Optional[str] = ""
     notes: Optional[str] = ""
     items: List[CartItem]
     total: int
@@ -139,6 +141,10 @@ async def get_menu_categories():
 async def create_order(payload: OrderCreate):
     if not payload.items:
         raise HTTPException(status_code=400, detail="Cart is empty")
+    if payload.order_type not in ("delivery", "pickup"):
+        raise HTTPException(status_code=400, detail="Invalid order_type")
+    if payload.order_type == "delivery" and not (payload.address or "").strip():
+        raise HTTPException(status_code=400, detail="Address required for delivery")
     order = Order(**payload.model_dump())
     doc = order.model_dump()
     doc["created_at"] = doc["created_at"].isoformat()
