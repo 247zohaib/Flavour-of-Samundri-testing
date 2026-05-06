@@ -70,7 +70,7 @@ const Home = () => {
               className="font-body text-base sm:text-lg text-white/65 max-w-xl mt-6 leading-relaxed animate-fade-up"
               style={{ animationDelay: "0.3s" }}
             >
-              Slow-cooked Punjabi classics, hand-pulled chai, and rustic coffee — served from
+              Slow-cooked Punjabi classics, hand-pulled chai,— served from
               a kitchen that still believes recipes are written with love, not numbers.
             </p>
 
@@ -81,9 +81,9 @@ const Home = () => {
               <Link to="/menu" data-testid="hero-view-menu" className="btn-chalk-primary">
                 View Menu <ArrowRight size={16} />
               </Link>
-              <Link to="/contact" data-testid="hero-visit-us" className="btn-chalk-outline">
+              {/* <Link to="/contact" data-testid="hero-visit-us" className="btn-chalk-outline">
                 <MapPin size={16} /> Visit Us
-              </Link>
+              </Link> */}
               <Link to="/order" data-testid="hero-order-now" className="btn-chalk-outline">
                 Order Now
               </Link>
@@ -92,14 +92,15 @@ const Home = () => {
           <div className="md:col-span-3 hidden md:flex flex-col gap-4 items-end">
             <div className="doodle-frame p-5 max-w-[220px] bg-[#1a1a1a]/50">
               <p className="font-heading text-2xl text-white leading-tight">
-                "Tastes like<br />Naani's kitchen."
-              </p>
-              <div className="flex items-center gap-1 mt-3 text-[#F59E0B]">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <DoodleStar key={i} size={14} />
-                ))}
-              </div>
-              <p className="font-body text-xs text-white/55 mt-1">— Local guest</p>
+  "Tastes & feel like<br />
+  <span className="block text-center">Home."</span>
+</p>
+              <div className="flex items-center justify-center gap-1 mt-3 text-[#F59E0B]">
+  {Array.from({ length: 5 }).map((_, i) => (
+    <DoodleStar key={i} size={14} />
+  ))}
+</div>
+              <p className="font-body text-xs text-white/55 mt-1"></p>
             </div>
             <DoodleArrow className="text-white/30 -rotate-6" size={120} />
           </div>
@@ -115,15 +116,17 @@ const Home = () => {
                   <span>·</span>
                   <span>Doodh Patti</span>
                   <span>·</span>
-                  <span>Aloo Paratha</span>
-                  <span>·</span>
-                  <span>Gajar Halwa</span>
-                  <span>·</span>
-                  <span>Kashmiri Chai</span>
+                  <span>Paratha</span>
                   <span>·</span>
                   <span>Biryani</span>
                   <span>·</span>
-                  <span>Gulab Jamun</span>
+                  <span>Daal</span>
+                  <span>·</span>
+                  <span>Sandwich</span>
+                  <span>·</span>
+                  <span>Fries</span>
+                  <span>·</span>
+                  <span>Burger</span>
                   <span>·</span>
                 </div>
               ))}
@@ -137,10 +140,10 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-6 sm:px-8 grid md:grid-cols-3 gap-10">
           {[
             { icon: Utensils, title: "Home Cooked", text: "Recipes our mothers and grandmothers handed down — never shortcut, always slow." },
-            { icon: Coffee, title: "Brewed Slow", text: "Doodh patti pulled the village way, espresso ground for every cup." },
+            { icon: Coffee, title: "Brewed Slow", text: "Doodh patti pulled the village way" },
             { icon: Heart, title: "Made with Love", text: "Small batches, fresh herbs, and a whole lot of heart on every plate." },
           ].map((b, i) => (
-            <div key={i} className="reveal-on-mount animate-fade-up" style={{ animationDelay: `${i * 0.1}s` }}>
+            <div key={i} className="reveal-on-mount animate-fade-up" style={{ animationDelay: `${i * 0.5}s` }}>
               <b.icon className="text-[#D97706]" size={28} />
               <h3 className="font-heading text-4xl text-white mt-3">{b.title}</h3>
               <p className="font-body text-white/65 mt-2 leading-relaxed">{b.text}</p>
@@ -187,14 +190,14 @@ const Home = () => {
             Hungry yet?
           </h2>
           <p className="font-body text-white/65 mt-3 max-w-xl mx-auto">
-            Order online, or come find us — there's always a fresh kettle on.
+            Order online, or pick up — there's always a fresh kettle on.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Link to="/order" data-testid="cta-order-now" className="btn-chalk-primary">
               Order Now <ArrowRight size={16} />
             </Link>
             <Link to="/contact" data-testid="cta-visit" className="btn-chalk-outline">
-              Visit Us
+              Contact Us
             </Link>
           </div>
         </div>

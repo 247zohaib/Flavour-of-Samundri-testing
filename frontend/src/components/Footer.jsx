@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Instagram, Facebook, Phone, MapPin, Clock } from "lucide-react";
+import { Instagram, Facebook, Phone, MapPin, Clock, Mail } from "lucide-react";
 import { DoodleCoffeeBean, DoodleSwirl, DoodleLeaf } from "./Doodles";
 
 const Footer = () => {
@@ -16,12 +16,12 @@ const Footer = () => {
             <h3 className="font-heading text-4xl text-white chalk-text">Flavors of Samundri</h3>
           </div>
           <p className="font-body text-white/65 max-w-md leading-relaxed">
-            Home-cooked Pakistani goodness, slow-brewed chai and rustic coffee — served from
+            Home-cooked Pakistani goodness, slow-brewed chai — served from
             the heart of Samundri to your table.
           </p>
           <div className="flex items-center gap-3 mt-6">
             <a
-              href="https://instagram.com"
+              href="https://www.instagram.com/flavours_of_samundri?igsh=MXhqMDczcm81aWhxOA=="
               target="_blank"
               rel="noreferrer"
               data-testid="footer-instagram"
@@ -54,22 +54,28 @@ const Footer = () => {
         </div>
 
         <div className="md:col-span-3">
-          <div className="section-eyebrow mb-4">Visit Us</div>
+          <div className="section-eyebrow mb-4">Contact Us</div>
           <ul className="space-y-3 font-body text-white/75 text-sm">
-            <li className="flex items-start gap-2">
+            {/* <li className="flex items-start gap-2">
               <MapPin size={16} className="mt-1 text-[#D97706]" />
               Shahbaz Garden, Samundri, Punjab
-            </li>
+            </li> */}
             <li className="flex items-start gap-2">
               <Phone size={16} className="mt-1 text-[#D97706]" />
               <a href="tel:+923080471471" className="hover:text-white" data-testid="footer-phone">
                 0308-0471471
               </a>
             </li>
-            <li className="flex items-start gap-2">
+               <li className="flex items-start gap-2">
+      <Mail size={16} className="mt-1 text-[#D97706]" />
+      <a href="mailto:flavourofsamundari@gmail.com" className="hover:text-white" data-testid="footer-email">
+        flavourofsamundri@gmail.com
+      </a>
+    </li>
+            {/* <li className="flex items-start gap-2">
               <Clock size={16} className="mt-1 text-[#D97706]" />
               Daily • 11:00 AM – 12:00 AM
-            </li>
+            </li> */}
           </ul>
         </div>
 
