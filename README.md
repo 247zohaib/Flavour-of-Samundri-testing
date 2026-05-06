@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Flavors of Samundri
 
 A modern dark chalkboard-themed food-delivery website for a homemade Pakistani / Punjabi cafe in Samundri, plus a private owner dashboard for managing orders and tracking sales.
@@ -160,3 +161,6 @@ The admin user is auto-seeded from `.env` on first backend start.
 
 ## License
 Private — all rights reserved.
+=======
+# Flavour-of-Samundri-testing
+>>>>>>> 26884efd1cc6e8a59c65a4f8397507c1ced8c2e8
