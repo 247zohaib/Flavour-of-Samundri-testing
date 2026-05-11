@@ -30,7 +30,7 @@ const Footer = () => {
             >
               <Instagram size={16} />
             </a>
-            <a
+            {/* <a
               href="https://facebook.com"
               target="_blank"
               rel="noreferrer"
@@ -39,7 +39,7 @@ const Footer = () => {
               aria-label="Facebook"
             >
               <Facebook size={16} />
-            </a>
+            </a> */}
             <a
               href="https://wa.me/923080471471"
               target="_blank"
