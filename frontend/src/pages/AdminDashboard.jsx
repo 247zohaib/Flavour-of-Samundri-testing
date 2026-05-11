@@ -772,7 +772,7 @@ const DiscountsTab = ({ headers }) => {
     } catch { toast.error("Failed to load discounts."); }
     finally { setLoading(false); }
   };
- // eslint-disable-next-line 
+  // eslint-disable-next-line
   useEffect(() => { fetchDiscounts(); }, []);
 
   const handleCreate = async () => {
@@ -1250,69 +1250,206 @@ const AdminDashboard = () => {
           )}
 
           {/* ── ANALYTICS ── */}
-          {tab === "analytics" && (
-            <div className="charts-grid">
-              <div className="chart-card">
-                <div className="chart-title">Revenue Over Time</div>
-                {ordersByDate.length === 0 ? <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No data yet.</p> :
-                  <ResponsiveContainer width="100%" height={220}>
-                    <BarChart data={ordersByDate}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                      <XAxis dataKey="date" tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 11 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `Rs ${v}`} />
-                      <Tooltip content={<ChartTooltip />} />
-                      <Bar dataKey="revenue" name="revenue" fill="#F59E0B" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                }
-              </div>
-              <div className="chart-card">
-                <div className="chart-title">Orders Per Day</div>
-                {ordersByDate.length === 0 ? <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No data yet.</p> :
-                  <ResponsiveContainer width="100%" height={220}>
-                    <LineChart data={ordersByDate}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                      <XAxis dataKey="date" tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 11 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                      <Tooltip content={<ChartTooltip />} />
-                      <Line type="monotone" dataKey="orders" name="orders" stroke="#3B82F6" strokeWidth={2} dot={{ r: 4, fill: "#3B82F6" }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                }
-              </div>
-              <div className="chart-card">
-                <div className="chart-title">Orders by Status</div>
-                {statusPieData.length === 0 ? <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No data yet.</p> :
-                  <ResponsiveContainer width="100%" height={220}>
-                    <PieChart>
-                      <Pie data={statusPieData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={2} dataKey="value">
-                        {statusPieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                      </Pie>
-                      <Tooltip formatter={(v, n) => [v, n]} contentStyle={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6 }} />
-                      <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                }
-              </div>
-              <div className="chart-card">
-                <div className="chart-title">Top Menu Items</div>
-                {topItems.length === 0 ? <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No data yet.</p> :
-                  <table className="items-table">
-                    <thead><tr><th>Item</th><th>Qty</th><th>Revenue</th></tr></thead>
-                    <tbody>
-                      {topItems.map((it, i) => (
-                        <tr key={i}>
-                          <td>{it.name}</td>
-                          <td style={{ color: "var(--amber)", fontWeight: 700 }}>{it.qty}</td>
-                          <td style={{ color: "rgba(255,255,255,0.6)" }}>{fmtMoney(it.revenue)}</td>
-                        </tr>
+          {tab === "analytics" && (() => {
+            // Discount analytics calculations
+            const discountOrders = orders.filter(o => (o.discount_savings || 0) > 0);
+            const totalSavingsGiven = orders.reduce((s, o) => s + (o.discount_savings || 0), 0);
+            const totalOriginalRevenue = orders.filter(o => o.status === "completed").reduce((s, o) => s + (o.original_total || o.total), 0);
+            const discountRate = orders.length > 0 ? Math.round((discountOrders.length / orders.length) * 100) : 0;
+
+            // Per-discount performance
+            const discountPerf = {};
+            orders.forEach(o => {
+              o.items?.forEach(it => {
+                if (!it.discount_name) return;
+                const key = it.discount_name;
+                if (!discountPerf[key]) discountPerf[key] = { name: key, type: it.discount_type, orders: new Set(), qty: 0, savings: 0 };
+                discountPerf[key].orders.add(o.id);
+                discountPerf[key].qty += it.quantity;
+              });
+            });
+            discountOrders.forEach(o => {
+              o.items?.forEach(it => {
+                if (!it.discount_name || !discountPerf[it.discount_name]) return;
+                const saved = ((it.price - (it.discounted_price || it.price)) * it.quantity) || 0;
+                discountPerf[it.discount_name].savings += saved;
+              });
+            });
+            const discountPerfList = Object.values(discountPerf).map(d => ({ ...d, orders: d.orders.size })).sort((a, b) => b.orders - a.orders);
+
+            // Revenue with/without discount chart
+            const revenueCompareData = ordersByDate.map(d => ({
+              date: d.date,
+              revenue: d.revenue,
+              withDiscount: orders.filter(o => {
+                const day = fmtShortDate(o.created_at);
+                return day === d.date && o.status === "completed" && (o.discount_savings || 0) > 0;
+              }).reduce((s, o) => s + o.total, 0),
+            }));
+
+            return (
+              <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+                {/* Discount KPI row */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14 }}>
+                  {[
+                    { label: "Discount Orders", value: discountOrders.length, sub: `${discountRate}% of all orders`, accent: "#F59E0B", icon: "🏷️" },
+                    { label: "Total Savings Given", value: fmtMoney(totalSavingsGiven), sub: "given to customers", accent: "#10B981", icon: "💰" },
+                    { label: "BOGO Orders", value: orders.filter(o => o.items?.some(it => it.discount_type === "bogo")).length, sub: "buy one get one free", accent: "#8B5CF6", icon: "🎁" },
+                    { label: "Avg Saving/Order", value: discountOrders.length > 0 ? fmtMoney(Math.round(totalSavingsGiven / discountOrders.length)) : "Rs 0", sub: "per discounted order", accent: "#06B6D4", icon: "📊" },
+                  ].map((k, i) => (
+                    <div key={i} style={{ background: "var(--bg2)", border: "1px solid var(--border)", borderRadius: 10, padding: "16px 18px" }}>
+                      <div style={{ fontSize: 22, marginBottom: 6 }}>{k.icon}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>{k.label}</div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: k.accent, letterSpacing: "-0.02em", lineHeight: 1 }}>{k.value}</div>
+                      <div style={{ fontSize: 11, color: "var(--text-sub)", marginTop: 4 }}>{k.sub}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Charts row 1 */}
+                <div className="charts-grid">
+                  <div className="chart-card">
+                    <div className="chart-title">📈 Revenue Over Time</div>
+                    {ordersByDate.length === 0 ? <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No data yet.</p> :
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={ordersByDate}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                          <XAxis dataKey="date" tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `Rs ${v}`} />
+                          <Tooltip content={<ChartTooltip />} />
+                          <Bar dataKey="revenue" name="revenue" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    }
+                  </div>
+                  <div className="chart-card">
+                    <div className="chart-title">📦 Orders Per Day</div>
+                    {ordersByDate.length === 0 ? <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No data yet.</p> :
+                      <ResponsiveContainer width="100%" height={220}>
+                        <LineChart data={ordersByDate}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                          <XAxis dataKey="date" tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                          <Tooltip content={<ChartTooltip />} />
+                          <Line type="monotone" dataKey="orders" name="orders" stroke="#3B82F6" strokeWidth={2} dot={{ r: 4, fill: "#3B82F6" }} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    }
+                  </div>
+                  <div className="chart-card">
+                    <div className="chart-title">🍽️ Orders by Status</div>
+                    {statusPieData.length === 0 ? <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No data yet.</p> :
+                      <ResponsiveContainer width="100%" height={220}>
+                        <PieChart>
+                          <Pie data={statusPieData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={2} dataKey="value">
+                            {statusPieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                          </Pie>
+                          <Tooltip formatter={(v, n) => [v, n]} contentStyle={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6 }} />
+                          <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    }
+                  </div>
+                  <div className="chart-card">
+                    <div className="chart-title">🏆 Top Menu Items</div>
+                    {topItems.length === 0 ? <p style={{ color: "var(--text-muted)", fontSize: 13 }}>No data yet.</p> :
+                      <table className="items-table">
+                        <thead><tr><th>#</th><th>Item</th><th>Qty Sold</th><th>Revenue</th></tr></thead>
+                        <tbody>
+                          {topItems.map((it, i) => (
+                            <tr key={i}>
+                              <td style={{ color: "var(--text-sub)", fontSize: 12 }}>{i + 1}</td>
+                              <td style={{ fontWeight: 600 }}>{it.name}</td>
+                              <td style={{ color: "var(--amber)", fontWeight: 700 }}>{it.qty}</td>
+                              <td style={{ color: "rgba(255,255,255,0.6)" }}>{fmtMoney(it.revenue)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    }
+                  </div>
+                </div>
+
+                {/* Discount Performance Section */}
+                <div style={{ background: "var(--bg2)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 12, overflow: "hidden" }}>
+                  <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10, background: "rgba(245,158,11,0.05)" }}>
+                    <span style={{ fontSize: 18 }}>🏷️</span>
+                    <div>
+                      <p style={{ color: "white", fontWeight: 700, fontSize: 15 }}>Discount Performance</p>
+                      <p style={{ color: "var(--text-muted)", fontSize: 12 }}>How each active offer is performing across all orders</p>
+                    </div>
+                  </div>
+
+                  {discountPerfList.length === 0 ? (
+                    <div style={{ padding: 32, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>
+                      No discount orders yet. Create a discount offer and customers will start using it.
+                    </div>
+                  ) : (
+                    <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
+                      {discountPerfList.map((d, i) => (
+                        <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, padding: "12px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid var(--border)", borderRadius: 9 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                            <div style={{ width: 40, height: 40, background: "rgba(245,158,11,0.1)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+                              {d.type === "bogo" ? "🎁" : d.type === "percent" ? "%" : "Rs"}
+                            </div>
+                            <div>
+                              <p style={{ color: "white", fontWeight: 700, fontSize: 14 }}>{d.name}</p>
+                              <p style={{ color: "var(--text-muted)", fontSize: 11, marginTop: 2, textTransform: "capitalize" }}>
+                                {d.type === "bogo" ? "Buy 1 Get 1 Free" : d.type === "percent" ? "Percentage Discount" : "Fixed Amount Off"}
+                              </p>
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+                            <div style={{ textAlign: "center" }}>
+                              <p style={{ color: "#F59E0B", fontWeight: 800, fontSize: 20, lineHeight: 1 }}>{d.orders}</p>
+                              <p style={{ color: "var(--text-muted)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", marginTop: 3 }}>Orders</p>
+                            </div>
+                            <div style={{ textAlign: "center" }}>
+                              <p style={{ color: "#3B82F6", fontWeight: 800, fontSize: 20, lineHeight: 1 }}>{d.qty}</p>
+                              <p style={{ color: "var(--text-muted)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", marginTop: 3 }}>Items</p>
+                            </div>
+                            <div style={{ textAlign: "center" }}>
+                              <p style={{ color: "#10B981", fontWeight: 800, fontSize: 20, lineHeight: 1 }}>{fmtMoney(d.savings)}</p>
+                              <p style={{ color: "var(--text-muted)", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", marginTop: 3 }}>Given</p>
+                            </div>
+                          </div>
+                        </div>
                       ))}
-                    </tbody>
-                  </table>
-                }
+                    </div>
+                  )}
+                </div>
+
+                {/* Discount vs Normal orders comparison */}
+                {discountOrders.length > 0 && (
+                  <div className="chart-card">
+                    <div className="chart-title">💰 Discount Impact — Normal vs Discounted Orders</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+                      {[
+                        { label: "Normal Orders", count: orders.length - discountOrders.length, revenue: orders.filter(o => !o.discount_savings).reduce((s, o) => s + o.total, 0), color: "#3B82F6" },
+                        { label: "Discounted Orders", count: discountOrders.length, revenue: discountOrders.reduce((s, o) => s + o.total, 0), color: "#F59E0B" },
+                      ].map((item, i) => (
+                        <div key={i} style={{ padding: "14px 16px", background: "rgba(255,255,255,0.03)", borderRadius: 8, border: `1px solid ${item.color}30` }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                            <div style={{ width: 8, height: 8, borderRadius: "50%", background: item.color, flexShrink: 0 }} />
+                            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>{item.label}</span>
+                          </div>
+                          <p style={{ color: "white", fontWeight: 800, fontSize: 22, letterSpacing: "-0.02em" }}>{item.count}</p>
+                          <p style={{ color: item.color, fontSize: 13, fontWeight: 600, marginTop: 4 }}>{fmtMoney(item.revenue)}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ padding: "10px 14px", background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: 8, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                      <span style={{ fontSize: 13, color: "rgba(255,255,255,0.7)" }}>Total discount savings given to customers</span>
+                      <span style={{ fontSize: 18, fontWeight: 800, color: "#10B981" }}>{fmtMoney(totalSavingsGiven)}</span>
+                    </div>
+                  </div>
+                )}
+
               </div>
-            </div>
-          )}
+            );
+          })()}
+
 
           {/* ── DATE REPORTS ── */}
           {tab === "daterange" && <DateRangeTab headers={headers} />}
