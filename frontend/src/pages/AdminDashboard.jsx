@@ -12,6 +12,7 @@ import {
   ChevronDown, LayoutDashboard, ClipboardList, MessageSquare,
   BarChart2, CheckCircle2, Loader2, Calendar, Trash2, AlertTriangle,
   FileSpreadsheet, Search, Tag, Plus, ToggleLeft, ToggleRight, Gift,
+  Edit3, Image, Star, Utensils, BookOpen,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -983,6 +984,497 @@ const DiscountsTab = ({ headers }) => {
   );
 };
 
+// ── Menu Management Tab ───────────────────────────────────────
+const MenuManagementTab = ({ headers }) => {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    name: "", description: "", price: "", category: "", image: "", featured: false, imageMode: "url", gdriveLink: "",
+  });
+
+  const fetchMenu = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API}/admin/menu`, { headers });
+      setItems(res.data);
+    } catch { toast.error("Failed to load menu."); }
+    finally { setLoading(false); }
+  };
+  // eslint-disable-next-line
+  useEffect(() => { fetchMenu(); }, []);
+
+  const resetForm = () => {
+    setForm({ name: "", description: "", price: "", category: "", image: "", featured: false, imageMode: "url", gdriveLink: "" });
+    setEditItem(null);
+    setShowForm(false);
+  };
+
+  const openEdit = (item) => {
+    setForm({
+      name: item.name, description: item.description, price: String(item.price),
+      category: item.category, image: item.image || "", featured: item.featured,
+    });
+    setEditItem(item);
+    setShowForm(true);
+  };
+
+  const handleSave = async () => {
+    if (!form.name.trim() || !form.price || !form.category.trim()) {
+      toast.error("Name, price, and category are required."); return;
+    }
+    setSaving(true);
+    try {
+      if (editItem) {
+        const res = await axios.patch(`${API}/admin/menu/${editItem.id}`, {
+          name: form.name, description: form.description, price: parseInt(form.price),
+          category: form.category, image: form.image || null, featured: form.featured,
+        }, { headers });
+        setItems(prev => prev.map(i => i.id === editItem.id ? res.data : i));
+        toast.success("Menu item updated!");
+      } else {
+        const res = await axios.post(`${API}/admin/menu`, {
+          name: form.name, description: form.description, price: parseInt(form.price),
+          category: form.category, image: form.image || null, featured: form.featured,
+        }, { headers });
+        setItems(prev => [...prev, res.data]);
+        toast.success("Menu item added!");
+      }
+      resetForm();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to save.");
+    } finally { setSaving(false); }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this menu item permanently?")) return;
+    try {
+      await axios.delete(`${API}/admin/menu/${id}`, { headers });
+      setItems(prev => prev.filter(i => i.id !== id));
+      toast.success("Item deleted.");
+    } catch { toast.error("Failed to delete."); }
+  };
+
+  const handleToggleFeatured = async (item) => {
+    try {
+      const res = await axios.patch(`${API}/admin/menu/${item.id}`, { featured: !item.featured }, { headers });
+      setItems(prev => prev.map(i => i.id === item.id ? res.data : i));
+      toast.success(res.data.featured ? "Marked as featured!" : "Removed from featured.");
+    } catch { toast.error("Failed to update."); }
+  };
+
+  const categories = [...new Set(items.map(i => i.category))];
+  const inputStyle = {
+    background: "var(--bg3)", border: "1px solid var(--border2)", color: "white",
+    padding: "9px 12px", borderRadius: 7, fontSize: 13, width: "100%", outline: "none",
+  };
+  const labelStyle = { fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.1em", display: "block", marginBottom: 6 };
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <h2 style={{ color: "white", fontSize: 20, fontWeight: 700, margin: 0 }}>Menu Management</h2>
+          <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 4 }}>Add, edit, or remove menu items. Changes reflect on the customer site instantly.</p>
+        </div>
+        <button onClick={() => { resetForm(); setShowForm(s => !s); }}
+          style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 18px", background: "#D97706", border: "none", color: "black", borderRadius: 7, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+          <Plus size={15} /> {showForm && !editItem ? "Cancel" : "Add New Item"}
+        </button>
+      </div>
+
+      {/* Create/Edit Form */}
+      {showForm && (
+        <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", borderRadius: 10, padding: 20, marginBottom: 20 }}>
+          <p style={{ color: "white", fontWeight: 600, fontSize: 15, marginBottom: 16 }}>
+            {editItem ? `Edit: ${editItem.name}` : "Add New Menu Item"}
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
+            <div style={{ gridColumn: "span 2" }}>
+              <label style={labelStyle}>Item Name *</label>
+              <input style={inputStyle} placeholder='e.g. "Chicken Biryani"'
+                value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+            </div>
+            <div>
+              <label style={labelStyle}>Price (Rs) *</label>
+              <input type="number" min="1" style={inputStyle} placeholder="e.g. 450"
+                value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} />
+            </div>
+            <div>
+              <label style={labelStyle}>Category *</label>
+              <input style={inputStyle} placeholder='e.g. "Main Course"' list="cat-list"
+                value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} />
+              <datalist id="cat-list">
+                {categories.map(c => <option key={c} value={c} />)}
+              </datalist>
+            </div>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <label style={labelStyle}>Description</label>
+              <textarea style={{ ...inputStyle, minHeight: 70, resize: "vertical" }} placeholder="Short description of the item..."
+                value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
+            </div>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <label style={labelStyle}>Item Image (optional)</label>
+
+              {/* Image source tabs */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 10 }}>
+                {[
+                  { id: "url", label: "🔗 Paste URL" },
+                  { id: "gdrive", label: "📁 Google Drive" },
+                  { id: "upload", label: "📷 Upload from Device" },
+                ].map(opt => (
+                  <button key={opt.id} type="button"
+                    onClick={() => setForm({ ...form, imageMode: opt.id, image: "" })}
+                    style={{
+                      padding: "5px 12px", fontSize: 11, borderRadius: 6, cursor: "pointer",
+                      border: `1px solid ${(form.imageMode || "url") === opt.id ? "var(--amber-dim)" : "var(--border2)"}`,
+                      background: (form.imageMode || "url") === opt.id ? "rgba(217,119,6,0.12)" : "transparent",
+                      color: (form.imageMode || "url") === opt.id ? "var(--amber)" : "rgba(255,255,255,0.5)",
+                      fontWeight: (form.imageMode || "url") === opt.id ? 600 : 400,
+                    }}>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* URL input */}
+              {(!form.imageMode || form.imageMode === "url") && (
+                <input style={inputStyle} placeholder="https://images.unsplash.com/... or any image link"
+                  value={form.image} onChange={e => setForm({ ...form, image: e.target.value })} />
+              )}
+
+              {/* Google Drive input */}
+              {form.imageMode === "gdrive" && (
+                <div>
+                  <input style={inputStyle}
+                    placeholder="Paste Google Drive share link — e.g. https://drive.google.com/file/d/ABC123/view"
+                    value={form.gdriveLink || ""}
+                    onChange={e => {
+                      const link = e.target.value;
+                      setForm(f => ({ ...f, gdriveLink: link }));
+                      // Auto-convert Google Drive link to direct image URL
+                      const match = link.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                      if (match) {
+                        const fileId = match[1];
+                        const directUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+                        setForm(f => ({ ...f, gdriveLink: link, image: directUrl }));
+                      }
+                    }}
+                  />
+                  <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 5 }}>
+                    ℹ️ Make sure the file is set to <strong style={{ color: "rgba(255,255,255,0.5)" }}>"Anyone with the link can view"</strong> in Google Drive sharing settings.
+                  </p>
+                  {form.image && (
+                    <p style={{ fontSize: 11, color: "#10B981", marginTop: 4 }}>
+                      ✅ Converted: {form.image}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Device upload */}
+              {form.imageMode === "upload" && (
+                <div>
+                  <label style={{
+                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                    gap: 8, padding: "24px 16px", borderRadius: 8, cursor: "pointer",
+                    border: "2px dashed rgba(217,119,6,0.4)", background: "rgba(217,119,6,0.04)",
+                    transition: "all 0.2s",
+                  }}
+                    onDragOver={e => e.preventDefault()}
+                    onDrop={e => {
+                      e.preventDefault();
+                      const file = e.dataTransfer.files[0];
+                      if (!file || !file.type.startsWith("image/")) { toast.error("Please drop an image file."); return; }
+                      if (file.size > 2 * 1024 * 1024) { toast.error("Image must be under 2MB."); return; }
+                      const reader = new FileReader();
+                      reader.onload = ev => setForm(f => ({ ...f, image: ev.target.result }));
+                      reader.readAsDataURL(file);
+                    }}>
+                    <Image size={28} style={{ color: "#D97706" }} />
+                    <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Click to upload or drag & drop</span>
+                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)" }}>JPG, PNG, WEBP — max 2MB</span>
+                    <input type="file" accept="image/*" style={{ display: "none" }}
+                      onChange={e => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        if (file.size > 2 * 1024 * 1024) { toast.error("Image must be under 2MB."); return; }
+                        const reader = new FileReader();
+                        reader.onload = ev => setForm(f => ({ ...f, image: ev.target.result }));
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                  </label>
+                  <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 5 }}>
+                    ⚠️ Uploaded images are stored as base64. For best performance, use a URL or Google Drive link instead.
+                  </p>
+                </div>
+              )}
+
+              {/* Preview */}
+              {form.image && (
+                <div style={{ marginTop: 10, display: "flex", alignItems: "flex-start", gap: 10 }}>
+                  <div style={{ borderRadius: 8, overflow: "hidden", width: 120, height: 90, flexShrink: 0, border: "1px solid var(--border2)" }}>
+                    <img src={form.image} alt="preview" style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      onError={e => { e.target.style.display = "none"; }} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 11, color: "#10B981", fontWeight: 600 }}>✅ Image preview looks good</p>
+                    <button type="button" onClick={() => setForm(f => ({ ...f, image: "", gdriveLink: "" }))}
+                      style={{ marginTop: 6, fontSize: 11, color: "#EF4444", background: "transparent", border: "1px solid rgba(239,68,68,0.3)", padding: "3px 10px", borderRadius: 5, cursor: "pointer" }}>
+                      Remove image
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div>
+              <label style={labelStyle}>Featured on Home?</label>
+              <button onClick={() => setForm({ ...form, featured: !form.featured })}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8, padding: "8px 14px", borderRadius: 7, cursor: "pointer",
+                  border: `1px solid ${form.featured ? "var(--amber-dim)" : "var(--border2)"}`,
+                  background: form.featured ? "rgba(217,119,6,0.15)" : "transparent",
+                  color: form.featured ? "var(--amber)" : "rgba(255,255,255,0.6)",
+                }}>
+                {form.featured ? <Star size={14} /> : <Star size={14} />}
+                {form.featured ? "Yes — Featured" : "No — Regular"}
+              </button>
+            </div>
+          </div>
+          <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
+            <button onClick={handleSave} disabled={saving}
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "9px 20px", background: "#D97706", border: "none", color: "black", borderRadius: 7, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+              {saving ? <Loader2 size={14} className="spin" /> : <Plus size={14} />}
+              {saving ? "Saving..." : editItem ? "Update Item" : "Add Item"}
+            </button>
+            <button onClick={resetForm}
+              style={{ padding: "9px 16px", background: "transparent", border: "1px solid var(--border2)", color: "rgba(255,255,255,0.6)", borderRadius: 7, fontSize: 13, cursor: "pointer" }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Items List */}
+      {loading ? (
+        <div className="empty-state"><Loader2 size={28} className="spin" style={{ color: "var(--amber)" }} /><p>Loading menu…</p></div>
+      ) : items.length === 0 ? (
+        <div className="empty-state">
+          <Utensils size={36} style={{ color: "var(--text-muted)" }} />
+          <p>No menu items yet. Add your first item!</p>
+        </div>
+      ) : (
+        <>
+          <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 12 }}>
+            {items.length} items · {categories.length} categories
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 12 }}>
+            {items.map(item => (
+              <div key={item.id} style={{
+                background: "var(--bg2)", border: `1px solid ${item.featured ? "rgba(245,158,11,0.3)" : "var(--border)"}`,
+                borderRadius: 10, overflow: "hidden", transition: "border-color 0.15s",
+              }}>
+                {item.image && (
+                  <div style={{ height: 140, overflow: "hidden", borderBottom: "1px solid var(--border)" }}>
+                    <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  </div>
+                )}
+                <div style={{ padding: 14 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 4 }}>
+                        <span style={{ color: "white", fontWeight: 700, fontSize: 15 }}>{item.name}</span>
+                        {item.featured && (
+                          <span style={{ background: "rgba(245,158,11,0.15)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.3)", padding: "1px 8px", borderRadius: 20, fontSize: 10, fontWeight: 600 }}>
+                            ★ Featured
+                          </span>
+                        )}
+                      </div>
+                      <span style={{ fontSize: 11, color: "var(--text-muted)", background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: 4 }}>
+                        {item.category}
+                      </span>
+                    </div>
+                    <span style={{ color: "#F59E0B", fontWeight: 800, fontSize: 16, whiteSpace: "nowrap" }}>Rs {item.price}</span>
+                  </div>
+                  {item.description && (
+                    <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", lineHeight: 1.5, marginTop: 6, marginBottom: 10 }}>
+                      {item.description.length > 80 ? item.description.slice(0, 80) + "..." : item.description}
+                    </p>
+                  )}
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <button onClick={() => openEdit(item)}
+                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", background: "transparent", border: "1px solid var(--border2)", color: "rgba(255,255,255,0.7)", borderRadius: 6, fontSize: 11, cursor: "pointer" }}>
+                      <Edit3 size={12} /> Edit
+                    </button>
+                    <button onClick={() => handleToggleFeatured(item)}
+                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", background: "transparent", border: `1px solid ${item.featured ? "rgba(245,158,11,0.4)" : "var(--border2)"}`, color: item.featured ? "#F59E0B" : "rgba(255,255,255,0.5)", borderRadius: 6, fontSize: 11, cursor: "pointer" }}>
+                      <Star size={12} /> {item.featured ? "Unfeature" : "Feature"}
+                    </button>
+                    <button onClick={() => handleDelete(item.id)}
+                      style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", background: "transparent", border: "1px solid var(--border2)", color: "rgba(255,255,255,0.4)", borderRadius: 6, fontSize: 11, cursor: "pointer" }}>
+                      <Trash2 size={12} /> Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Info */}
+      <div style={{ marginTop: 20, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 8, padding: 14 }}>
+        <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 12, lineHeight: 1.7 }}>
+          💡 <strong style={{ color: "var(--amber)" }}>Tips:</strong> Featured items appear on the Home page. Add image URLs from Unsplash or any hosting. Categories are auto-detected.
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// ── Chalkboard Management Tab ─────────────────────────────────
+const ChalkboardTab = ({ headers }) => {
+  const [boards, setBoards] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const fetchBoards = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API}/admin/chalkboard`, { headers });
+      setBoards(res.data);
+    } catch { toast.error("Failed to load chalkboard."); }
+    finally { setLoading(false); }
+  };
+  // eslint-disable-next-line
+  useEffect(() => { fetchBoards(); }, []);
+
+  const handleCreate = async () => {
+    if (!message.trim()) { toast.error("Please write a message."); return; }
+    setSaving(true);
+    try {
+      const res = await axios.post(`${API}/admin/chalkboard`, { message: message.trim(), active: true }, { headers });
+      setBoards(prev => [res.data, ...prev.map(b => ({ ...b, active: false }))]);
+      setMessage("");
+      toast.success("Chalkboard updated! It's now live on the Home page.");
+    } catch { toast.error("Failed to save."); }
+    finally { setSaving(false); }
+  };
+
+  const handleToggle = async (id) => {
+    try {
+      const res = await axios.patch(`${API}/admin/chalkboard/${id}/toggle`, {}, { headers });
+      if (res.data.active) {
+        setBoards(prev => prev.map(b => ({ ...b, active: b.id === id })));
+      } else {
+        setBoards(prev => prev.map(b => b.id === id ? { ...b, active: false } : b));
+      }
+      toast.success(res.data.active ? "Chalkboard activated!" : "Chalkboard hidden.");
+    } catch { toast.error("Failed to toggle."); }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this chalkboard message?")) return;
+    try {
+      await axios.delete(`${API}/admin/chalkboard/${id}`, { headers });
+      setBoards(prev => prev.filter(b => b.id !== id));
+      toast.success("Deleted.");
+    } catch { toast.error("Failed to delete."); }
+  };
+
+  const inputStyle = {
+    background: "var(--bg3)", border: "1px solid var(--border2)", color: "white",
+    padding: "12px 14px", borderRadius: 7, fontSize: 14, width: "100%", outline: "none",
+    minHeight: 80, resize: "vertical", fontFamily: "'Outfit', sans-serif",
+  };
+
+  return (
+    <div>
+      <div style={{ marginBottom: 20 }}>
+        <h2 style={{ color: "white", fontSize: 20, fontWeight: 700, margin: 0 }}>Daily Chalkboard</h2>
+        <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 4 }}>
+          Write today's special message. It shows as a chalkboard on the Home page.
+        </p>
+      </div>
+
+      {/* Write new */}
+      <div style={{ background: "var(--bg2)", border: "1px solid var(--border2)", borderRadius: 10, padding: 20, marginBottom: 20 }}>
+        <label style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.1em", display: "block", marginBottom: 8 }}>
+          Write Today's Message
+        </label>
+        <textarea style={inputStyle} placeholder='e.g. "Today&#39;s Special: Fresh Chicken Biryani with Raita — Rs 450 only! 🍚🔥"'
+          value={message} onChange={e => setMessage(e.target.value)} />
+        <button onClick={handleCreate} disabled={saving}
+          style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 6, padding: "9px 20px", background: "#D97706", border: "none", color: "black", borderRadius: 7, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+          {saving ? <Loader2 size={14} className="spin" /> : <BookOpen size={14} />}
+          {saving ? "Publishing..." : "Publish to Chalkboard"}
+        </button>
+      </div>
+
+      {/* Preview */}
+      {boards.find(b => b.active) && (
+        <div style={{ marginBottom: 20, background: "linear-gradient(135deg, #1a2a1a, #0d1f0d)", border: "3px solid rgba(139,90,43,0.6)", borderRadius: 12, padding: 24, textAlign: "center" }}>
+          <p style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: 8 }}>Live Preview — What customers see</p>
+          <p style={{ fontSize: 20, color: "white", fontWeight: 600, fontFamily: "'Outfit', sans-serif" }}>
+            {boards.find(b => b.active)?.message}
+          </p>
+        </div>
+      )}
+
+      {/* History */}
+      {loading ? (
+        <div className="empty-state"><Loader2 size={28} className="spin" style={{ color: "var(--amber)" }} /><p>Loading…</p></div>
+      ) : boards.length === 0 ? (
+        <div className="empty-state">
+          <BookOpen size={36} style={{ color: "var(--text-muted)" }} />
+          <p>No chalkboard messages yet. Write your first one above!</p>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>Message History</p>
+          {boards.map(b => (
+            <div key={b.id} style={{
+              background: "var(--bg2)", border: `1px solid ${b.active ? "rgba(245,158,11,0.3)" : "var(--border)"}`,
+              borderRadius: 8, padding: 14, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap",
+              opacity: b.active ? 1 : 0.6,
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 10, background: b.active ? "rgba(245,158,11,0.15)" : "rgba(255,255,255,0.06)", color: b.active ? "#F59E0B" : "var(--text-muted)", padding: "2px 8px", borderRadius: 20, fontWeight: 600 }}>
+                    {b.active ? "🟢 LIVE" : "⭕ OFF"}
+                  </span>
+                </div>
+                <p style={{ color: "white", fontSize: 14, margin: 0 }}>{b.message}</p>
+              </div>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button onClick={() => handleToggle(b.id)}
+                  style={{ padding: "6px 12px", background: "transparent", border: `1px solid ${b.active ? "rgba(245,158,11,0.4)" : "var(--border2)"}`, color: b.active ? "#F59E0B" : "rgba(255,255,255,0.5)", borderRadius: 6, fontSize: 11, cursor: "pointer" }}>
+                  {b.active ? "Hide" : "Show"}
+                </button>
+                <button onClick={() => handleDelete(b.id)}
+                  style={{ padding: "6px 12px", background: "transparent", border: "1px solid var(--border2)", color: "rgba(255,255,255,0.4)", borderRadius: 6, fontSize: 11, cursor: "pointer" }}>
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ marginTop: 20, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 8, padding: 14 }}>
+        <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 12, lineHeight: 1.7 }}>
+          💡 <strong style={{ color: "var(--amber)" }}>How it works:</strong> Only one chalkboard can be active at a time. When you publish a new one, the old one is automatically hidden. Customers see the active message on the Home page in a beautiful chalkboard design.
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // ── Main Dashboard ────────────────────────────────────────────
 const AdminDashboard = () => {
   const { user, logout, authHeaders } = useAuth();
@@ -1070,6 +1562,8 @@ const AdminDashboard = () => {
   const TABS = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
     { id: "orders", label: `Orders (${orders.length})`, icon: ClipboardList },
+    { id: "menu", label: "Menu", icon: Utensils },
+    { id: "chalkboard", label: "Chalkboard", icon: BookOpen },
     { id: "analytics", label: "Analytics", icon: BarChart2 },
     { id: "daterange", label: "Date Reports", icon: Calendar },
     { id: "discounts", label: "Discounts", icon: Tag },
@@ -1450,6 +1944,12 @@ const AdminDashboard = () => {
             );
           })()}
 
+
+          {/* ── MENU MANAGEMENT ── */}
+          {tab === "menu" && <MenuManagementTab headers={headers} />}
+
+          {/* ── CHALKBOARD ── */}
+          {tab === "chalkboard" && <ChalkboardTab headers={headers} />}
 
           {/* ── DATE REPORTS ── */}
           {tab === "daterange" && <DateRangeTab headers={headers} />}
