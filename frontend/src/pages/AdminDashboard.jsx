@@ -1992,5 +1992,5 @@ const AdminDashboard = () => {
     </>
   );
 };
-
+//rename
 export default AdminDashboard;
